@@ -1,4 +1,5 @@
 #include "database.h"
+#include <QMessageBox>
 
 DataBase::DataBase(QObject *parent) : QObject(parent)
 {
@@ -10,45 +11,22 @@ DataBase::~DataBase()
 
 }
 
-/* Методы для подключения к базе данных
- * */
-void DataBase::connectToDataBase()
-{
-    /* Перед подключением к базе данных производим проверку на её существование.
-     * В зависимости от результата производим открытие базы данных или её восстановление
-     * */
-    if(!QFile("D:/Programming/Databases/" DATABASE_NAME).exists()){
-        this->restoreDataBase();
-    } else {
-        this->openDataBase();
-    }
-}
 
-/* Методы восстановления базы данных
- * */
-bool DataBase::restoreDataBase()
-{
-    // Если база данных открылась ...
-    if(this->openDataBase()){
-        // Производим восстановление базы данных
-        return (this->createTable()) ? true : false;
-    } else {
-        qDebug() << "Не удалось восстановить базу данных";
-        return false;
-    }
-    return false;
-}
 
 /* Метод для открытия базы данных
  * */
 bool DataBase::openDataBase()
 {
-    /* База данных открывается по заданному пути
-     * и имени базы данных, если она существует
-     * */
-    db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setHostName(DATABASE_HOSTNAME);
-    db.setDatabaseName("D:/Programming/Databases/" DATABASE_NAME);
+    static QSqlDatabase db = QSqlDatabase::addDatabase("QODBC");
+
+    db.setConnectOptions();
+    QString serverName = "DESKTOP-OP1LROT";
+    QString dbName = "Supermarket_warehouse";
+
+    QString connectionString =  QString("DRIVER={ODBC Driver 17 for SQL Server};Server=%1;Database=%2;Trusted_Connection=Yes;").arg(serverName).arg(dbName);
+
+    db.setDatabaseName(connectionString);
+
     if(db.open()){
         return true;
     } else {
@@ -56,36 +34,6 @@ bool DataBase::openDataBase()
     }
 }
 
-/* Методы закрытия базы данных
- * */
-void DataBase::closeDataBase()
-{
-    db.close();
-}
-
-/* Метод для создания таблицы в базе данных
- * */
-bool DataBase::createTable()
-{
-    /* В данном случае используется формирование сырого SQL-запроса
-     * с последующим его выполнением.
-     * */
-    QSqlQuery query;
-    if(!query.exec( "CREATE TABLE " TABLE " ("
-                            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                            TABLE_FNAME     " VARCHAR(255)    NOT NULL,"
-                            TABLE_SNAME     " VARCHAR(255)    NOT NULL,"
-                            TABLE_NIK       " VARCHAR(255)    NOT NULL"
-                        " )"
-                    )){
-        qDebug() << "DataBase: error of create " << TABLE;
-        qDebug() << query.lastError().text();
-        return false;
-    } else {
-        return true;
-    }
-    return false;
-}
 
 /* Метод для вставки записи в базу данных
  * */
@@ -99,23 +47,19 @@ bool DataBase::inserIntoTable(const QVariantList &data)
      * которые потом связываются методом bindValue
      * для подстановки данных из QVariantList
      * */
-    query.prepare("INSERT INTO " TABLE " ( " TABLE_FNAME ", "
-                                             TABLE_SNAME ", "
-                                             TABLE_NIK " ) "
+    query.prepare("INSERT INTO Warehouse ( product_id, warehouse_info_id, amount ) "
                   "VALUES (:FName, :SName, :Nik)");
-    query.bindValue(":FName",       data[0].toString());
-    query.bindValue(":SName",       data[1].toString());
-    query.bindValue(":Nik",         data[2].toString());
+    query.bindValue(":FName",       data[0].toInt());
+    query.bindValue(":SName",       data[1].toInt());
+    query.bindValue(":Nik",         data[2].toInt());
 
     // После чего выполняется запросом методом exec()
     if(!query.exec()){
-        qDebug() << "error insert into " << TABLE;
-        qDebug() << query.lastError().text();
+        emit sendInfo(query.lastError().text());
         return false;
     } else {
         return true;
     }
-    return false;
 }
 
 /* Второй метод для вставки записи в базу данных
@@ -141,12 +85,12 @@ bool DataBase::removeRecord(const int id)
     QSqlQuery query;
 
     // Удаление производим по id записи, который передается в качестве аргумента функции
-    query.prepare("DELETE FROM " TABLE " WHERE id= :ID ;");
+    query.prepare("DELETE FROM Warehouse WHERE product_id= :ID ;");
     query.bindValue(":ID", id);
 
     // Выполняем удаление
     if(!query.exec()){
-        qDebug() << "error delete row " << TABLE;
+        qDebug() << "error delete row " << "Warehouse";
         qDebug() << query.lastError().text();
         return false;
     } else {

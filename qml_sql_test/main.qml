@@ -23,13 +23,15 @@ ApplicationWindow {
         TextField {id: fnameField}
         Text {text: qsTr("Назва складу")}
         TextField { id: snameField}
+        Text {text: qsTr("Кількість")}
+        TextField { id: amountField}
 
         Button {
             text: qsTr("Добавити")
 
             // Вносим новую запись в базу данных
             onClicked: {
-                database.inserIntoTable(fnameField.text , snameField.text, nikField.text)
+                database.inserIntoTable(fnameField.text , snameField.text, amountField.text)
                 myModel.updateModel() // И обновляем модель данных с новой записью
             }
         }
@@ -50,6 +52,10 @@ ApplicationWindow {
         TableViewColumn {
             role: "wname"
             title: "Назва складу"
+        }
+        TableViewColumn {
+            role: "amt"
+            title: "Кількість"
         }
 
         model: myModel
@@ -76,6 +82,23 @@ ApplicationWindow {
                     }
                 }
             }
+        }
+    }
+
+    MessageDialog {
+        id: mesInfo
+        property alias information: mesInfo.text
+
+        title: "Info"
+        icon: StandardIcon.Warning
+        standardButtons: StandardButton.Ok
+    }
+
+    Connections{
+        target: database
+        onSendInfo: {
+            mesInfo.information = text
+            mesInfo.open()
         }
     }
 

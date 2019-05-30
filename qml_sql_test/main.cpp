@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 
     // Подключаемся к базе данных
     DataBase database;
-    database.connectToDataBase();
+    database.openDataBase();
 
     // Объявляем и инициализируем модель данных
     ListModel *model = new ListModel();
